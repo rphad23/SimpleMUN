@@ -6,6 +6,46 @@
 <title>Roll Call System</title>
 <style>
     /* Add your CSS styles here */
+    .motion-card {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto; /* 15% from the top and centered */
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%; /* Could be more or less, depending on screen size */
+    }
+
+    /* The Close Button */
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
 </style>
 </head>
 <body>
@@ -24,10 +64,41 @@
     </div>
 
     <button id="takeRollBtn" onclick="toggleRollCall()">Take Roll Call</button>
-    <button id="saveBtn" onclick="saveRollCall()" style="display: none;">Save Roll Call</button>
+    <button id="saveBtn" onclick="saveRollCall()">Save Roll Call</button>
+
+    <!-- Present Motion System -->
+    <div id="motionForm" style="display: none;">
+        <h2>Present Motion</h2>
+        <label for="motionType">Motion Type:</label>
+        <select id="motionType" onchange="toggleMotionFields()">
+            <option value="moderated">Moderated</option>
+            <option value="unmoderated">Unmoderated</option>
+        </select>
+        <div id="motionFields">
+            <!-- Motion fields will be populated dynamically here -->
+        </div>
+        <button onclick="submitMotion()">Submit Motion</button>
+    </div>
+
+    <div id="motionCards">
+        <!-- Motion cards will appear here -->
+    </div>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p id="modalContent"></p>
+        </div>
+
+    </div>
 
     <script>
         let people = [];
+        let motions = [];
+        let rollCallTaken = false;
 
         function addPerson() {
             const name = document.getElementById('name').value;
@@ -49,8 +120,18 @@
             people.forEach(person => {
                 const personDiv = document.createElement('div');
                 personDiv.dataset.name = person.name;
-                personDiv.innerHTML = `<label>${person.name}</label><span>: ${getStatusText(person.status)}</span>`;
+                personDiv.innerHTML = `<label>${person.name}</label><span>Status: ${getStatusText(person.status)}</span>`;
                 positionsElement.appendChild(personDiv);
+            });
+            // Populate presenter dropdown in motion form
+            const presenterSelect = document.getElementById('presenter');
+            presenterSelect.innerHTML = '';
+            people.forEach(person => {
+                if (person.status === 'P' || person.status === 'PV') {
+                    const option = document.createElement('option');
+                    option.text = person.name;
+                    presenterSelect.add(option);
+                }
             });
         }
 
@@ -59,31 +140,33 @@
                 case 'P':
                     return 'Present';
                 case 'PV':
-                    return 'Present and Voting';
+                    return 'Voting';
                 default:
                     return 'Absent';
             }
         }
 
         function toggleRollCall() {
+            rollCallTaken = false;
             const positionsElement = document.getElementById('positions');
             if (positionsElement.innerHTML.trim() === '') {
                 alert('Please add people to the list first.');
                 return;
             }
-
             // Show radio buttons for status and remove the 'Add Person' button
             people.forEach(person => {
                 const personDiv = positionsElement.querySelector(`div[data-name="${person.name}"]`);
-                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="P"> P`;
-                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="PV"> PV`;
-                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="A" checked> A`;
+                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="P" ${person.status === 'P' ? 'checked' : ''}> P`;
+                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="PV" ${person.status === 'PV' ? 'checked' : ''}> PV`;
+                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="A" ${person.status === 'A' ? 'checked' : ''}> A`;
             });
             document.getElementById('takeRollBtn').style.display = 'none'; // Hide the 'Take Roll Call' button
             document.getElementById('saveBtn').style.display = 'block'; // Show the 'Save Roll Call' button
+            document.getElementById('motionForm').style.display = 'block'; // Show the motion form
         }
 
         function saveRollCall() {
+            rollCallTaken = true;
             const positionsElement = document.getElementById('positions');
             people.forEach(person => {
                 const radioButtons = positionsElement.querySelectorAll(`input[type="radio"][name="${person.name}"]:checked`);
@@ -92,7 +175,167 @@
                 }
             });
             renderPeople();
+            document.getElementById('takeRollBtn').style.display = 'block'; // Show the 'Take Roll Call' button
             document.getElementById('saveBtn').style.display = 'none'; // Hide the 'Save Roll Call' button
+        }
+
+        function toggleMotionFields() {
+            const motionType = document.getElementById('motionType').value;
+            const motionFields = document.getElementById('motionFields');
+            const speakerTimeLabel = document.getElementById('speakerTimeLabel');
+            const speakerTimeInput = document.getElementById('speakerTime');
+            if (motionType === 'moderated') {
+                motionFields.innerHTML = `
+                    <label for="topic">Topic:</label>
+                    <input type="text" id="topic">
+                    <label for="totalTime">Total Time:</label>
+                    <input type="number" id="totalTime" min="1">
+                    <label for="speakerTime" id="speakerTimeLabel">Speaker Time:</label>
+                    <input type="number" id="speakerTime" min="1">
+                    <label for="presenter">Presenter:</label>
+                    <select id="presenter"></select>
+                `;
+                speakerTimeLabel.style.display = 'inline-block';
+                speakerTimeInput.style.display = 'inline-block';
+            } else if (motionType === 'unmoderated') {
+                motionFields.innerHTML = `
+                    <label for="totalTime">Total Time:</label>
+                    <input type="number" id="totalTime" min="1">
+                    <label for="presenter">Presenter:</label>
+                    <select id="presenter"></select>
+                `;
+                speakerTimeLabel.style.display = 'none';
+                speakerTimeInput.style.display = 'none';
+            }
+            // Populate presenter dropdown in motion form
+            const presenterSelect = document.getElementById('presenter');
+            presenterSelect.innerHTML = '';
+            people.forEach(person => {
+                if (person.status === 'P' || person.status === 'PV') {
+                    const option = document.createElement('option');
+                    option.text = person.name;
+                    presenterSelect.add(option);
+                }
+            });
+        }
+
+        function submitMotion() {
+            const motionType = document.getElementById('motionType').value;
+            const topic = document.getElementById('topic').value;
+            const totalTime = parseInt(document.getElementById('totalTime').value);
+            const speakerTime = motionType === 'moderated' ? parseInt(document.getElementById('speakerTime').value) : null;
+            const presenter = document.getElementById('presenter').value;
+            if (!topic || !totalTime || !presenter) {
+                alert('Please fill in all fields.');
+                return;
+            }
+            if (motionType === 'moderated' && !speakerTime) {
+                alert('Please fill in speaker time.');
+                return;
+            }
+            motions.push({ type: motionType, topic: topic, totalTime: totalTime, speakerTime: speakerTime, presenter: presenter });
+            renderMotionCards();
+        }
+
+        function renderMotionCards() {
+            const motionCardsElement = document.getElementById('motionCards');
+            motionCardsElement.innerHTML = '';
+            motions.forEach((motion, index) => {
+                const motionCard = document.createElement('div');
+                motionCard.classList.add('motion-card');
+                motionCard.innerHTML = `
+                    <p><strong>Type:</strong> ${motion.type}</p>
+                    <p><strong>Topic:</strong> ${motion.topic}</p>
+                    <p><strong>Total Time:</strong> ${motion.totalTime}</p>
+                    ${motion.speakerTime ? `<p><strong>Speaker Time:</strong> ${motion.speakerTime}</p>` : ''}
+                    <p><strong>Presenter:</strong> ${motion.presenter}</p>
+                    <button onclick="handleMotion('${motion.type}', ${index})">View Details</button>
+                `;
+                motionCardsElement.appendChild(motionCard);
+            });
+        }
+
+        function handleMotion(type, index) {
+            const motion = motions[index];
+            if (type === 'moderated') {
+                const modalContent = `
+                    <h2>Motion Details</h2>
+                    <p><strong>Type:</strong> ${motion.type}</p>
+                    <p><strong>Topic:</strong> ${motion.topic}</p>
+                    <p><strong>Total Time:</strong> ${motion.totalTime}</p>
+                    <p><strong>Speaker Time:</strong> ${motion.speakerTime}</p>
+                    <p><strong>Presenter:</strong> ${motion.presenter}</p>
+                    <button onclick="passMotion(${index})">Pass</button>
+                    <button onclick="failMotion(${index})">Fail</button>
+                `;
+                showModal(modalContent);
+            } else if (type === 'unmoderated') {
+                const modalContent = `
+                    <h2>Motion Details</h2>
+                    <p><strong>Type:</strong> ${motion.type}</p>
+                    <p><strong>Topic:</strong> ${motion.topic}</p>
+                    <p><strong>Total Time:</strong> ${motion.totalTime}</p>
+                    <p><strong>Presenter:</strong> ${motion.presenter}</p>
+                    <button onclick="passMotion(${index})">Pass</button>
+                    <button onclick="failMotion(${index})">Fail</button>
+                `;
+                showModal(modalContent);
+            }
+        }
+
+        function showModal(content) {
+            // Get the modal
+            const modal = document.getElementById('myModal');
+
+            // Get the <span> element that closes the modal
+            const span = document.getElementsByClassName('close')[0];
+
+            // Show the modal with the content
+            const modalContent = document.querySelector('.modal-content');
+            modalContent.innerHTML = content;
+            modal.style.display = 'block';
+
+            // When the user clicks on <span> (x), close the modal
+            span.onclick = function() {
+                closeModal();
+            };
+
+            // When the user clicks anywhere outside of the modal, close it
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    closeModal();
+                }
+            };
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('myModal');
+            modal.style.display = 'none';
+        }
+
+        function passMotion(index) {
+            // Show the modal with motion details
+            const motion = motions[index];
+            const modalContent = `
+                <h2>Motion Passed</h2>
+                <p><strong>Type:</strong> ${motion.type}</p>
+                <p><strong>Topic:</strong> ${motion.topic}</p>
+                <p><strong>Total Time:</strong> ${motion.totalTime}</p>
+                ${motion.speakerTime ? `<p><strong>Speaker Time:</strong> ${motion.speakerTime}</p>` : ''}
+                <p><strong>Presenter:</strong> ${motion.presenter}</p>
+                <button onclick="closeModal()">Close</button>
+            `;
+            showModal(modalContent);
+            // Remove motion card
+            motions.splice(index, 1);
+            renderMotionCards();
+        }
+
+        function failMotion(index) {
+            // Remove motion card
+            motions.splice(index, 1);
+            renderMotionCards();
+            closeModal();
         }
     </script>
 </body>
