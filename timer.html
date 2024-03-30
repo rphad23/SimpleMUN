@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Timer System</title>
+<style>
+  /* Add your CSS styling here */
+</style>
+</head>
+<body>
+
+<div>
+  <label for="topic">Topic:</label>
+  <input type="text" id="topic" placeholder="Enter Topic">
+  
+  <label for="nextSpeaker">Next Speaker:</label>
+  <input type="text" id="nextSpeaker" placeholder="Enter Next Speaker">
+  
+  <label for="totalTime">Set Total Time (minutes):</label>
+  <input type="number" id="totalTime" min="1" placeholder="Total Time">
+  
+  <label for="speakerTime">Set Speaker Time (minutes):</label>
+  <input type="number" id="speakerTime" min="1" placeholder="Speaker Time">
+  
+  <button onclick="submitDetails()">Submit</button>
+</div>
+
+<div id="details" style="display:none;">
+  <p>Topic: <span id="displayTopic"></span></p>
+  <p>Next Speaker: <span id="displayNextSpeaker"></span></p>
+  <p>Total Time: <span id="displayTotalTime">00:00</span></p>
+  <p>Speaker Time: <span id="displaySpeakerTime">00:00</span></p>
+  <button id="startButton" onclick="startTimer()">Start Timer</button>
+</div>
+
+<div>
+  <p>Total Timer: <span id="totalTimer">00:00</span></p>
+  <p>Speaker Timer: <span id="speakerTimer">00:00</span></p>
+</div>
+
+<script>
+  let totalInterval, speakerInterval;
+
+  function submitDetails() {
+    let topic = document.getElementById('topic').value;
+    let nextSpeaker = document.getElementById('nextSpeaker').value;
+    let totalTime = document.getElementById('totalTime').value;
+    let speakerTime = document.getElementById('speakerTime').value;
+    
+    document.getElementById('displayTopic').textContent = topic;
+    document.getElementById('displayNextSpeaker').textContent = nextSpeaker;
+    document.getElementById('displayTotalTime').textContent = totalTime + ":00";
+    document.getElementById('displaySpeakerTime').textContent = speakerTime + ":00";
+    
+    document.getElementById('details').style.display = 'block';
+    document.getElementById('startButton').style.display = 'inline';
+  }
+
+  function startTimer() {
+    let totalTime = document.getElementById('totalTime').value * 60;
+    let speakerTime = document.getElementById('speakerTime').value * 60;
+    document.getElementById('totalTimer').textContent = formatTime(totalTime);
+    document.getElementById('speakerTimer').textContent = formatTime(speakerTime);
+    
+    // Update the count down every 1 second
+    totalInterval = setInterval(function() {
+      totalTime--;
+      document.getElementById('totalTimer').textContent = formatTime(totalTime);
+      if (totalTime <= 0) clearInterval(totalInterval);
+    }, 1000);
+    
+    speakerInterval = setInterval(function() {
+      speakerTime--;
+      document.getElementById('speakerTimer').textContent = formatTime(speakerTime);
+      if (speakerTime <= 0) clearInterval(speakerInterval);
+    }, 1000);
+  }
+
+  function formatTime(seconds) {
+    let minutes = Math.floor(seconds / 60);
+    seconds = seconds % 60;
+    return minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roll Call System</title>
+<style>
+    /* Add your CSS styles here */
+</style>
+</head>
+<body>
+    <h1>Roll Call System</h1>
+
+    <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name">
+        <label for="veto">Veto Power:</label>
+        <input type="checkbox" id="veto">
+        <button onclick="addPerson()">Add Person</button>
+    </div>
+
+    <div id="positions">
+        <!-- List of people will appear here -->
+    </div>
+
+    <button id="takeRollBtn" onclick="toggleRollCall()">Take Roll Call</button>
+    <button id="saveBtn" onclick="saveRollCall()" style="display: none;">Save Roll Call</button>
+
+    <script>
+        let people = [];
+
+        function addPerson() {
+            const name = document.getElementById('name').value;
+            const veto = document.getElementById('veto').checked;
+            if (name.trim() !== '') {
+                people.push({ name: name, veto: veto, status: 'A' });
+                renderPeople();
+                // Reset input fields after adding person
+                document.getElementById('name').value = '';
+                document.getElementById('veto').checked = false;
+            } else {
+                alert('Please enter a name.');
+            }
+        }
+
+        function renderPeople() {
+            const positionsElement = document.getElementById('positions');
+            positionsElement.innerHTML = '';
+            people.forEach(person => {
+                const personDiv = document.createElement('div');
+                personDiv.dataset.name = person.name;
+                personDiv.innerHTML = `<label>${person.name}</label><span>: ${getStatusText(person.status)}</span>`;
+                positionsElement.appendChild(personDiv);
+            });
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'P':
+                    return 'Present';
+                case 'PV':
+                    return 'Present and Voting';
+                default:
+                    return 'Absent';
+            }
+        }
+
+        function toggleRollCall() {
+            const positionsElement = document.getElementById('positions');
+            if (positionsElement.innerHTML.trim() === '') {
+                alert('Please add people to the list first.');
+                return;
+            }
+
+            // Show radio buttons for status and remove the 'Add Person' button
+            people.forEach(person => {
+                const personDiv = positionsElement.querySelector(`div[data-name="${person.name}"]`);
+                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="P"> P`;
+                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="PV"> PV`;
+                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="A" checked> A`;
+            });
+            document.getElementById('takeRollBtn').style.display = 'none'; // Hide the 'Take Roll Call' button
+            document.getElementById('saveBtn').style.display = 'block'; // Show the 'Save Roll Call' button
+        }
+
+        function saveRollCall() {
+            const positionsElement = document.getElementById('positions');
+            people.forEach(person => {
+                const radioButtons = positionsElement.querySelectorAll(`input[type="radio"][name="${person.name}"]:checked`);
+                if (radioButtons.length > 0) {
+                    person.status = radioButtons[0].value;
+                }
+            });
+            renderPeople();
+            document.getElementById('saveBtn').style.display = 'none'; // Hide the 'Save Roll Call' button
+        }
+    </script>
+</body>
+</html>

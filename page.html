@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ModelUN Chair Management System</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="position-section">
+    <h2>Add Positions</h2>
+    <form id="position-form">
+        <label for="position-name">Position Name:</label>
+        <input type="text" id="position-name" required>
+        <label for="veto-power">Veto Power:</label>
+        <input type="checkbox" id="veto-power">
+        <label for="present-voting">Present</label>
+        <input type="checkbox" id="present">
+        <label for="present-voting">Present and Voting:</label>
+        <input type="checkbox" id="present-voting">
+        <button type="submit">Add Position</button>
+    </form>
+</div>
+
+<div id="positions-container"></div>
+<button id="edit-button">Take Roll</button>
+<button id="end-roll-call" style="display: none;">End Roll Call</button>
+
+<div id="checkboxes" style="display: none;">
+    <input type="checkbox" id="edit-present" name="edit-present">
+    <label for="edit-present">Present</label>
+    <input type="checkbox" id="edit-present-voting" name="edit-present-voting">
+    <label for="edit-present-voting">Present and Voting</label>
+</div>
+
+
+
+
+
+<div id="motion-section">
+    <h2>Present Motions</h2>
+    <form id="motion-form">
+        <label for="motion-name">Motion Name:</label>
+        <input type="text" id="motion-name" required>
+        <!-- Other motion details -->
+        <button type="submit">Present Motion</button>
+    </form>
+</div>
+
+<div id="mod-section">
+    <h2>Moderation</h2>
+    <p>Speaking Time: <span id="speaking-time">00:00</span></p>
+    <p>Total Time: <span id="total-time">00:00</span></p>
+    <ul id="presenters-list">
+        <!-- List of presenters -->
+    </ul>
+    <ul id="queue-list">
+        <!-- Queue of speakers -->
+    </ul>
+</div>
+
+<div id="unmod-section">
+    <h2>Unmoderated Discussion</h2>
+    <p>Timer: <span id="unmod-timer">00:00</span></p>
+</div>
+
+<div id="voting-section">
+    <h2>Resolution Voting</h2>
+    <form id="voting-form">
+        <label for="resolution">Resolution:</label>
+        <select id="resolution">
+            <!-- Options populated dynamically -->
+        </select>
+        <label for="vote">Vote:</label>
+        <select id="vote">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+            <option value="abstain">Abstain</option>
+        </select>
+        <button type="submit">Vote</button>
+    </form>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
