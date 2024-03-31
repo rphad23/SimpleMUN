@@ -71,6 +71,7 @@
         <h2>Present Motion</h2>
         <label for="motionType">Motion Type:</label>
         <select id="motionType" onchange="toggleMotionFields()">
+            <option value="">Select</option>
             <option value="moderated">Moderated</option>
             <option value="unmoderated">Unmoderated</option>
         </select>
@@ -116,22 +117,13 @@
 
         function renderPeople() {
             const positionsElement = document.getElementById('positions');
+            if (!positionsElement) return; // Check if the element exists
             positionsElement.innerHTML = '';
             people.forEach(person => {
                 const personDiv = document.createElement('div');
                 personDiv.dataset.name = person.name;
                 personDiv.innerHTML = `<label>${person.name}</label><span>Status: ${getStatusText(person.status)}</span>`;
                 positionsElement.appendChild(personDiv);
-            });
-            // Populate presenter dropdown in motion form
-            const presenterSelect = document.getElementById('presenter');
-            presenterSelect.innerHTML = '';
-            people.forEach(person => {
-                if (person.status === 'P' || person.status === 'PV') {
-                    const option = document.createElement('option');
-                    option.text = person.name;
-                    presenterSelect.add(option);
-                }
             });
         }
 
@@ -149,16 +141,18 @@
         function toggleRollCall() {
             rollCallTaken = false;
             const positionsElement = document.getElementById('positions');
-            if (positionsElement.innerHTML.trim() === '') {
+            if (!positionsElement || positionsElement.innerHTML.trim() === '') {
                 alert('Please add people to the list first.');
                 return;
             }
             // Show radio buttons for status and remove the 'Add Person' button
             people.forEach(person => {
                 const personDiv = positionsElement.querySelector(`div[data-name="${person.name}"]`);
-                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="P" ${person.status === 'P' ? 'checked' : ''}> P`;
-                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="PV" ${person.status === 'PV' ? 'checked' : ''}> PV`;
-                personDiv.innerHTML += `<input type="radio" name="${person.name}" value="A" ${person.status === 'A' ? 'checked' : ''}> A`;
+                if (personDiv) {
+                    personDiv.innerHTML += `<input type="radio" name="${person.name}" value="P" ${person.status === 'P' ? 'checked' : ''}> P`;
+                    personDiv.innerHTML += `<input type="radio" name="${person.name}" value="PV" ${person.status === 'PV' ? 'checked' : ''}> PV`;
+                    personDiv.innerHTML += `<input type="radio" name="${person.name}" value="A" ${person.status === 'A' ? 'checked' : ''}> A`;
+                }
             });
             document.getElementById('takeRollBtn').style.display = 'none'; // Hide the 'Take Roll Call' button
             document.getElementById('saveBtn').style.display = 'block'; // Show the 'Save Roll Call' button
@@ -168,6 +162,7 @@
         function saveRollCall() {
             rollCallTaken = true;
             const positionsElement = document.getElementById('positions');
+            if (!positionsElement) return; // Check if the element exists
             people.forEach(person => {
                 const radioButtons = positionsElement.querySelectorAll(`input[type="radio"][name="${person.name}"]:checked`);
                 if (radioButtons.length > 0) {
@@ -182,33 +177,31 @@
         function toggleMotionFields() {
             const motionType = document.getElementById('motionType').value;
             const motionFields = document.getElementById('motionFields');
-            const speakerTimeLabel = document.getElementById('speakerTimeLabel');
-            const speakerTimeInput = document.getElementById('speakerTime');
+            if (!motionFields) return; // Check if the element exists
             if (motionType === 'moderated') {
                 motionFields.innerHTML = `
                     <label for="topic">Topic:</label>
                     <input type="text" id="topic">
                     <label for="totalTime">Total Time:</label>
                     <input type="number" id="totalTime" min="1">
-                    <label for="speakerTime" id="speakerTimeLabel">Speaker Time:</label>
+                    <label for="speakerTime">Speaker Time:</label>
                     <input type="number" id="speakerTime" min="1">
                     <label for="presenter">Presenter:</label>
                     <select id="presenter"></select>
                 `;
-                speakerTimeLabel.style.display = 'inline-block';
-                speakerTimeInput.style.display = 'inline-block';
             } else if (motionType === 'unmoderated') {
                 motionFields.innerHTML = `
+                    <label for="topic">Topic:</label>
+                    <input type="text" id="topic">
                     <label for="totalTime">Total Time:</label>
                     <input type="number" id="totalTime" min="1">
                     <label for="presenter">Presenter:</label>
                     <select id="presenter"></select>
                 `;
-                speakerTimeLabel.style.display = 'none';
-                speakerTimeInput.style.display = 'none';
             }
             // Populate presenter dropdown in motion form
             const presenterSelect = document.getElementById('presenter');
+            if (!presenterSelect) return; // Check if the element exists
             presenterSelect.innerHTML = '';
             people.forEach(person => {
                 if (person.status === 'P' || person.status === 'PV') {
@@ -223,14 +216,10 @@
             const motionType = document.getElementById('motionType').value;
             const topic = document.getElementById('topic').value;
             const totalTime = parseInt(document.getElementById('totalTime').value);
-            const speakerTime = motionType === 'moderated' ? parseInt(document.getElementById('speakerTime').value) : null;
+            const speakerTime = parseInt(document.getElementById('speakerTime').value);
             const presenter = document.getElementById('presenter').value;
-            if (!topic || !totalTime || !presenter) {
+            if (!topic || !totalTime || !speakerTime || !presenter) {
                 alert('Please fill in all fields.');
-                return;
-            }
-            if (motionType === 'moderated' && !speakerTime) {
-                alert('Please fill in speaker time.');
                 return;
             }
             motions.push({ type: motionType, topic: topic, totalTime: totalTime, speakerTime: speakerTime, presenter: presenter });
@@ -247,7 +236,7 @@
                     <p><strong>Type:</strong> ${motion.type}</p>
                     <p><strong>Topic:</strong> ${motion.topic}</p>
                     <p><strong>Total Time:</strong> ${motion.totalTime}</p>
-                    ${motion.speakerTime ? `<p><strong>Speaker Time:</strong> ${motion.speakerTime}</p>` : ''}
+                    <p><strong>Speaker Time:</strong> ${motion.speakerTime}</p>
                     <p><strong>Presenter:</strong> ${motion.presenter}</p>
                     <button onclick="handleMotion('${motion.type}', ${index})">View Details</button>
                 `;
@@ -321,7 +310,7 @@
                 <p><strong>Type:</strong> ${motion.type}</p>
                 <p><strong>Topic:</strong> ${motion.topic}</p>
                 <p><strong>Total Time:</strong> ${motion.totalTime}</p>
-                ${motion.speakerTime ? `<p><strong>Speaker Time:</strong> ${motion.speakerTime}</p>` : ''}
+                <p><strong>Speaker Time:</strong> ${motion.speakerTime}</p>
                 <p><strong>Presenter:</strong> ${motion.presenter}</p>
                 <button onclick="closeModal()">Close</button>
             `;
